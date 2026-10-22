@@ -1,0 +1,30 @@
+---
+source_file: "src/components/Icons.jsx"
+type: "code"
+community: "Core UI Components"
+location: "L34"
+tags:
+  - graphify/code
+  - graphify/EXTRACTED
+  - community/Core_UI_Components
+---
+
+# PlayIcon()
+
+## Connections
+- [[DownloadsPage.jsx]] - `imports` [EXTRACTED]
+- [[EpisodeCard]] - `calls` [EXTRACTED]
+- [[HomePage()]] - `calls` [EXTRACTED]
+- [[HomePage.jsx]] - `imports` [EXTRACTED]
+- [[Icons.jsx]] - `contains` [EXTRACTED]
+- [[LocalFileCard]] - `calls` [EXTRACTED]
+- [[MediaCard]] - `calls` [EXTRACTED]
+- [[MediaCard.jsx]] - `imports` [EXTRACTED]
+- [[MoviePage()]] - `calls` [EXTRACTED]
+- [[MoviePage.jsx]] - `imports` [EXTRACTED]
+- [[SetupScreen()]] - `calls` [EXTRACTED]
+- [[SetupScreen.jsx]] - `imports` [EXTRACTED]
+- [[TVPage()]] - `calls` [EXTRACTED]
+- [[TVPage.jsx]] - `imports` [EXTRACTED]
+
+#graphify/code #graphify/EXTRACTED #community/Core_UI_Components

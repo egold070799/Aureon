@@ -1,0 +1,152 @@
+{
+  "nodes": [
+    {
+      "id": "7ce857924a3746dfbe92cbe043d80dc2",
+      "type": "text",
+      "x": 0,
+      "y": 0,
+      "width": 420,
+      "height": 300,
+      "text": "# Desktop shell & IPC\n\n- [[index.js]]\n- [[preload.js]]\n- [[_COMMUNITY_Electron Main Process]]\n- [[_COMMUNITY_Secure Preload Bridge]]\n- [[_COMMUNITY_Popout Window Controls]]",
+      "color": "1"
+    },
+    {
+      "id": "144666c14e9a411a9650cee9b855f26a",
+      "type": "text",
+      "x": 500,
+      "y": 0,
+      "width": 420,
+      "height": 300,
+      "text": "# Renderer & interface\n\n- [[App()]]\n- [[_COMMUNITY_Renderer Pages]]\n- [[_COMMUNITY_Core UI Components]]\n- [[_COMMUNITY_Appearance Preferences]]\n- [[_COMMUNITY_Home Layout Customization]]",
+      "color": "2"
+    },
+    {
+      "id": "b747096102e74815b1176e1cbdf5f8c5",
+      "type": "text",
+      "x": 1000,
+      "y": 0,
+      "width": 420,
+      "height": 300,
+      "text": "# Discovery & metadata\n\n- [[tmdbFetch()]]\n- [[_COMMUNITY_Media Provider Integrations]]\n- [[_COMMUNITY_TMDB Setup Guide]]\n- [[_COMMUNITY_Anime Skip Timings]]",
+      "color": "3"
+    },
+    {
+      "id": "8e2c51b9cf1e40978f43344869ee2edc",
+      "type": "text",
+      "x": 0,
+      "y": 380,
+      "width": 420,
+      "height": 300,
+      "text": "# Playback & downloads\n\n- [[MoviePage()]]\n- [[TVPage()]]\n- [[_COMMUNITY_Download Manager]]\n- [[_COMMUNITY_Subtitle Processing]]\n- [[_COMMUNITY_TV Episode Viewing]]",
+      "color": "4"
+    },
+    {
+      "id": "ea87ba099dc847178d5851f5e3caa2f1",
+      "type": "text",
+      "x": 500,
+      "y": 380,
+      "width": 420,
+      "height": 300,
+      "text": "# Aureon · project map\n\n- A curated entry point to the Graphify knowledge vault.\n- [[Start Here]] · [[Project Report]]\n- the canvas overview\n- [Open the full interactive graph](../graph.html)\n- 95 scanned files · 53 communities",
+      "color": "5"
+    },
+    {
+      "id": "86bbd1df604f49e0b3b4bd1888dd8b44",
+      "type": "text",
+      "x": 1000,
+      "y": 380,
+      "width": 420,
+      "height": 300,
+      "text": "# State & interaction\n\n- [[_COMMUNITY_Storage and Keychain]]\n- [[_COMMUNITY_Backup and Restore]]\n- [[_COMMUNITY_Gamepad Navigation]]\n- [[_COMMUNITY_Discord Presence]]\n- [[_COMMUNITY_Ad Block Statistics]]",
+      "color": "6"
+    },
+    {
+      "id": "6ee232ca33974a239b22f788cdc54b98",
+      "type": "text",
+      "x": 0,
+      "y": 760,
+      "width": 420,
+      "height": 300,
+      "text": "# Build & release\n\n- [[_COMMUNITY_Cross Platform Packaging]]\n- [[_COMMUNITY_Update Delivery]]\n- [[_COMMUNITY_macOS Build Pipeline]]\n- [[_COMMUNITY_CodeQL Workflow]]",
+      "color": "1"
+    },
+    {
+      "id": "3a67c092f23f4bf1899157ed74c2e3d7",
+      "type": "text",
+      "x": 500,
+      "y": 760,
+      "width": 420,
+      "height": 300,
+      "text": "# Setup & contributor docs\n\n- [[_COMMUNITY_First Run Setup]]\n- [[_COMMUNITY_Wyzie API Setup]]\n- [[_COMMUNITY_TMDB Signup Tutorial]]\n- [[_COMMUNITY_Contribution Workflow]]",
+      "color": "2"
+    },
+    {
+      "id": "e540582a2733462e9e9241a70cd777b4",
+      "type": "text",
+      "x": 1000,
+      "y": 760,
+      "width": 420,
+      "height": 300,
+      "text": "# Product & visual design\n\n- [[_COMMUNITY_Brand Logo and App Icon]]\n- [[_COMMUNITY_Brand Mascot Artwork]]\n- [[_COMMUNITY_Movie Details and Playback]]\n- [[_COMMUNITY_Home Layout Preferences]]\n- [[_COMMUNITY_Subtitle Download Screens]]",
+      "color": "3"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e94f9599975c402ebea40832f0be00fe",
+      "fromNode": "ea87ba099dc847178d5851f5e3caa2f1",
+      "toNode": "7ce857924a3746dfbe92cbe043d80dc2",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "79bae81f0c1749308a5bc08f5b6f5a4a",
+      "fromNode": "ea87ba099dc847178d5851f5e3caa2f1",
+      "toNode": "144666c14e9a411a9650cee9b855f26a",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "bdc2c8cefe6f4bf5bd4c4318bdad6187",
+      "fromNode": "ea87ba099dc847178d5851f5e3caa2f1",
+      "toNode": "b747096102e74815b1176e1cbdf5f8c5",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "4353e8047fce4ddab267bfe9261b7fb8",
+      "fromNode": "ea87ba099dc847178d5851f5e3caa2f1",
+      "toNode": "8e2c51b9cf1e40978f43344869ee2edc",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "4986cc31cf7945ba928bfbb5ebb12777",
+      "fromNode": "ea87ba099dc847178d5851f5e3caa2f1",
+      "toNode": "86bbd1df604f49e0b3b4bd1888dd8b44",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "3415a2ecec7a477c97c9d07fd8947b65",
+      "fromNode": "ea87ba099dc847178d5851f5e3caa2f1",
+      "toNode": "6ee232ca33974a239b22f788cdc54b98",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "44d734a1d0e94bc282ea0e69e03bd716",
+      "fromNode": "ea87ba099dc847178d5851f5e3caa2f1",
+      "toNode": "3a67c092f23f4bf1899157ed74c2e3d7",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "148a47477e6a426f96ac247105b3932a",
+      "fromNode": "ea87ba099dc847178d5851f5e3caa2f1",
+      "toNode": "e540582a2733462e9e9241a70cd777b4",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}
