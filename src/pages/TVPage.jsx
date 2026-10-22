@@ -467,11 +467,6 @@ export default function TVPage({
   const [webviewLoading, setWebviewLoading] = useState(false);
   const [webviewError, setWebviewError] = useState(null);
   const [playerFullscreen, setPlayerFullscreen] = useState(false);
-  const togglePlayerFullscreen = () => {
-    const next = !playerFullscreen;
-    setPlayerFullscreen(next);
-    document.documentElement.toggleAttribute("data-player-fullscreen", next);
-  };
   const [pipOpen, setPipOpen] = useState(false);
   const pipUrlRef = useRef(null);
   const pipWebContentsIdRef = useRef(null); // cached WebContents ID of the pop-out window
@@ -1651,14 +1646,12 @@ export default function TVPage({
     storage.set("downloaderFolder", folder);
   }, []);
 
-  // Intercept fullscreen requests from embedded players (vidsrc / 2embed use
-  // the native Fullscreen API which would otherwise fullscreen the entire app).
-  // Videasy and AllManga handle fullscreen internally via CSS, skip those.
+  // Some providers request native fullscreen, which would otherwise fullscreen
+  // the entire app window. Keep those requests scoped to the player wrapper.
   useEffect(() => {
     if (!playing) return;
     if (!NEEDS_INTERCEPT.includes(playerSource)) return;
     const enterH = window.electron?.onWebviewEnterFullscreen?.(() => {
-      // requestFullscreen() is rejected when Electron is already in fullscreen -> use css overlay
       setPlayerFullscreen(true);
       document.documentElement.setAttribute("data-player-fullscreen", "1");
     });
@@ -2421,17 +2414,6 @@ export default function TVPage({
                     </span>
                   )}
                 </button>
-                <button
-                  className="player-overlay-btn player-fullscreen-toggle"
-                  type="button"
-                  onClick={togglePlayerFullscreen}
-                  title={playerFullscreen ? "Exit cinema mode (Esc)" : "Cinema mode"}
-                  aria-label={playerFullscreen ? "Exit cinema mode" : "Enter cinema mode"}
-                >
-                  {playerFullscreen ? "⤢" : "⛶"}
-                  <span>{playerFullscreen ? "Exit" : "Cinema"}</span>
-                </button>
-
                 {/* Skip controls are injected directly into the webview DOM*/}
 
                 {/* AniSkip manual prompt, rendered in Aureon UI, outside webview */}

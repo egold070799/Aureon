@@ -1097,7 +1097,7 @@ body.no-anim *::after {
 }
 
 .player-wrap--fullscreen .player-overlay-group,
-.player-wrap--fullscreen .player-overlay-btn:not(.player-fullscreen-toggle) {
+.player-wrap--fullscreen .player-overlay-btn {
     display: none !important;
 }
 
@@ -1954,14 +1954,6 @@ kbd {
     outline: 2px solid #fff;
     outline-offset: 3px;
     opacity: 1;
-}
-
-.player-fullscreen-toggle {
-    top: 58px;
-    right: 12px;
-    min-width: 96px;
-    justify-content: center;
-    color: #fff;
 }
 
 .player-overlay-btn svg {
