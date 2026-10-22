@@ -4,3 +4,10 @@ download_config.ini
 dist/
 *.zip
 *secret.txt
+
+# Graphify local cache and workspace state; keep the published canvas and notes.
+graphify-out/.graphify_python
+graphify-out/.graphify_labels.json
+graphify-out/cost.json
+graphify-out/cache/
+graphify-out/.obsidian/
