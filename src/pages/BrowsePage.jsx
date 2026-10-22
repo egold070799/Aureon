@@ -32,7 +32,21 @@ const CATEGORIES = [
   { id: "53", label: "Thriller", movie: [53], tv: [53] },
 ];
 
-function discoverPath(kind, page, category, sort) {
+const COMMON_COUNTRIES = [
+  { iso_3166_1: "KR", english_name: "South Korea" },
+  { iso_3166_1: "JP", english_name: "Japan" },
+  { iso_3166_1: "CN", english_name: "China" },
+  { iso_3166_1: "TW", english_name: "Taiwan" },
+  { iso_3166_1: "HK", english_name: "Hong Kong" },
+  { iso_3166_1: "IN", english_name: "India" },
+  { iso_3166_1: "TH", english_name: "Thailand" },
+  { iso_3166_1: "PH", english_name: "Philippines" },
+  { iso_3166_1: "ID", english_name: "Indonesia" },
+  { iso_3166_1: "GB", english_name: "United Kingdom" },
+  { iso_3166_1: "US", english_name: "United States" },
+];
+
+function discoverPath(kind, page, category, sort, countryCode) {
   const genreIds = category.id === "all" ? [] : category[kind] || [];
   const params = new URLSearchParams({
     include_adult: "false",
@@ -48,6 +62,9 @@ function discoverPath(kind, page, category, sort) {
     params.set(kind === "movie" ? "primary_release_date.lte" : "first_air_date.lte", new Date().toISOString().slice(0, 10));
   }
   if (genreIds.length) params.set("with_genres", genreIds.join("|"));
+  if (countryCode && countryCode !== "all") {
+    params.set("with_origin_country", countryCode);
+  }
   return `/discover/${kind}?${params.toString()}`;
 }
 
@@ -62,6 +79,8 @@ export default function BrowsePage({
   const [categoryId, setCategoryId] = useState("all");
   const [type, setType] = useState("all");
   const [sort, setSort] = useState("popularity.desc");
+  const [countryCode, setCountryCode] = useState("all");
+  const [countries, setCountries] = useState(COMMON_COUNTRIES);
   const [items, setItems] = useState([]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
@@ -77,6 +96,21 @@ export default function BrowsePage({
   const activeCategory = CATEGORIES.find((entry) => entry.id === categoryId) || CATEGORIES[0];
   const sources = useMemo(() => type === "all" ? ["movie", "tv"] : [type], [type]);
 
+  useEffect(() => {
+    if (!apiKey || offline) return undefined;
+    let current = true;
+    tmdbFetch("/configuration/countries", apiKey)
+      .then((data) => {
+        if (!current || !Array.isArray(data)) return;
+        const available = data
+          .filter((country) => country.iso_3166_1 && country.english_name)
+          .sort((a, b) => a.english_name.localeCompare(b.english_name));
+        if (available.length) setCountries(available);
+      })
+      .catch(() => {});
+    return () => { current = false; };
+  }, [apiKey, offline]);
+
   const fetchUntil = useCallback(async (targetCount, generation) => {
     const batch = [];
     while (batch.length < targetCount && generationRef.current === generation) {
@@ -84,7 +118,7 @@ export default function BrowsePage({
       if (!eligible.length) break;
       const requests = eligible.map(async (kind) => {
         const page = pagesRef.current[kind]++;
-        const data = await tmdbFetch(discoverPath(kind, page, activeCategory, sort), apiKey);
+        const data = await tmdbFetch(discoverPath(kind, page, activeCategory, sort, countryCode), apiKey);
         totalsRef.current[kind] = Math.max(1, data.total_pages || 1);
         return (data.results || []).map((item) => ({ ...item, media_type: kind }));
       });
@@ -106,7 +140,7 @@ export default function BrowsePage({
       return (b.popularity || 0) - (a.popularity || 0);
     });
     return { batch, moreAvailable: sources.some((kind) => pagesRef.current[kind] <= totalsRef.current[kind]) };
-  }, [activeCategory, apiKey, sort, sources]);
+  }, [activeCategory, apiKey, countryCode, sort, sources]);
 
   useEffect(() => {
     const generation = ++generationRef.current;
@@ -134,7 +168,7 @@ export default function BrowsePage({
         }
       });
     return () => { generationRef.current++; };
-  }, [apiKey, offline, categoryId, type, sort, fetchUntil]);
+  }, [apiKey, offline, categoryId, type, sort, countryCode, fetchUntil]);
 
   const loadMore = useCallback(async () => {
     if (loading || loadingMoreRef.current || !hasMore || offline) return;
@@ -171,6 +205,7 @@ export default function BrowsePage({
   ), [pageItems, ratingsMap, ageLimitSetting]);
 
   const title = categoryId === "all" ? "Explore movies & series" : activeCategory.label;
+  const activeCountry = countries.find((country) => country.iso_3166_1 === countryCode);
 
   return (
     <section className="browse-page" aria-label="Discover movies and series">
@@ -190,9 +225,22 @@ export default function BrowsePage({
       <section className="browse-controls" aria-label="Browse filters">
         <div className="browse-section-heading">
           <div><div className="browse-eyebrow">Browse by mood</div><h2>Choose a category</h2></div>
-          <div className="browse-control-group" role="group" aria-label="Show">
-            {TYPES.map((option) => <button key={option.id} className={type === option.id ? "active" : ""}
-              onClick={() => setType(option.id)} aria-pressed={type === option.id}>{option.label}</button>)}
+          <div className="browse-control-tools">
+            <div className="browse-control-group" role="group" aria-label="Show">
+              {TYPES.map((option) => <button key={option.id} className={type === option.id ? "active" : ""}
+                onClick={() => setType(option.id)} aria-pressed={type === option.id}>{option.label}</button>)}
+            </div>
+            <label className="browse-country-filter">
+              <span>Country of origin</span>
+              <select value={countryCode} onChange={(event) => setCountryCode(event.target.value)}>
+                <option value="all">All countries</option>
+                {countries.map((country) => (
+                  <option key={country.iso_3166_1} value={country.iso_3166_1}>
+                    {country.english_name}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
         <div className="browse-category-list" role="group" aria-label="Genres">
@@ -208,7 +256,11 @@ export default function BrowsePage({
         <div className="browse-results-top">
           <div>
             <div className="browse-eyebrow">Curated for your next watch</div>
-            <h2>{title}<span>{visibleItems.length} titles</span></h2>
+            <h2>
+              {title}
+              {activeCountry && <span className="browse-country-context">{activeCountry.english_name}</span>}
+              <span className="browse-results-count">{visibleItems.length} titles</span>
+            </h2>
           </div>
           <label className="browse-sort">Sort by
             <select value={sort} onChange={(event) => setSort(event.target.value)}>

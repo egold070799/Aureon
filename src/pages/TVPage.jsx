@@ -50,6 +50,7 @@ import DownloadModal from "../components/DownloadModal";
 import TrailerModal from "../components/TrailerModal";
 import BlockedStatsModal from "../components/BlockedStatsModal";
 import { useBlockedStats } from "../utils/useBlockedStats";
+import useSourceSpeed from "../utils/useSourceSpeed";
 import {
   storage,
   STORAGE_KEYS,
@@ -481,6 +482,13 @@ export default function TVPage({
   const playerWrapRef = useRef(null);
   const webviewRef = useRef(null);
   const providerFallbackAttemptedRef = useRef(false);
+  const { metrics: sourceSpeedMetrics, fastestSourceId } = useSourceSpeed({
+    mediaType: "tv",
+    itemId: item.id,
+    sourceId: playerSource,
+    playing,
+    webviewRef,
+  });
   // Always-current refs for interval callbacks, avoids stale closures without restarting the interval
   const saveProgressRef = useRef(saveProgress);
   saveProgressRef.current = saveProgress;
@@ -489,11 +497,43 @@ export default function TVPage({
   const watchedRef = useRef(watched);
   watchedRef.current = watched;
 
+  // The player is rendered above the episode list. Keep the selected episode
+  // in view by moving the app's scroll container to the player as soon as it
+  // mounts; otherwise the card can say "Playing" while the player is offscreen.
+  useEffect(() => {
+    if (!playing || !selectedEp) return;
+    const frame = requestAnimationFrame(() => {
+      const player = playerWrapRef.current;
+      const scrollContainer = player?.closest(".main");
+      if (!player || !scrollContainer) return;
+
+      const playerTop =
+        player.getBoundingClientRect().top -
+        scrollContainer.getBoundingClientRect().top +
+        scrollContainer.scrollTop -
+        20;
+      scrollContainer.scrollTo({
+        top: Math.max(0, playerTop),
+        behavior: "smooth",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [playing, selectedEp?.episode_number, selectedSeason]);
+
   // Derived: detect anime before any effects so effects can use it
   const isAnime = useMemo(
     () => isAnimeContent(item, details),
     [item.id, details],
   );
+  const isKoreanTv = useMemo(() => {
+    const metadata = details || item;
+    return (
+      metadata.original_language === "ko" ||
+      metadata.origin_country?.includes("KR") ||
+      item.original_language === "ko" ||
+      item.origin_country?.includes("KR")
+    );
+  }, [details, item.original_language, item.origin_country]);
 
   const [downloaderFolder, setDownloaderFolder] = useState(
     () => storage.get("downloaderFolder") || "",
@@ -1248,6 +1288,58 @@ export default function TVPage({
       clearInterval(pollDuration);
     };
   }, [playing, playerSource, item.id, selectedEp?.episode_number]);
+
+  // Some Korean series providers return a valid page even when they do not
+  // have the selected episode. Network-load events cannot detect that case,
+  // so check for real playback and try one alternate provider automatically.
+  useEffect(() => {
+    if (!playing || !selectedEp || !isKoreanTv || isAsync) return;
+    const wv = webviewRef.current;
+    const queryProgress = window.electron?.queryVideoProgress;
+    if (!wv || !queryProgress) return;
+
+    let cancelled = false;
+    const timeout = setTimeout(async () => {
+      let playback = null;
+      try {
+        playback = await queryProgress(wv.getWebContentsId());
+      } catch {}
+      if (cancelled || playback) return;
+
+      if (!providerFallbackAttemptedRef.current) {
+        const nextSource = getNextNonAsyncSource(playerSource);
+        if (nextSource && nextSource !== playerSource) {
+          providerFallbackAttemptedRef.current = true;
+          setWebviewError(null);
+          setWebviewLoading(true);
+          setPlayerSource(nextSource);
+          storage.set(STORAGE_KEYS.PLAYER_SOURCE, nextSource);
+          return;
+        }
+      }
+
+      setWebviewLoading(false);
+      const sourceLabel =
+        PLAYER_SOURCES.find((source) => source.id === playerSource)?.label ||
+        "This source";
+      setWebviewError(
+        `${sourceLabel} opened, but playback did not start for this episode. Try another source or episode.`,
+      );
+    }, 18000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [
+    playing,
+    selectedEp?.episode_number,
+    selectedSeason,
+    isKoreanTv,
+    isAsync,
+    playerSource,
+    item.id,
+  ]);
 
   // ── AniSkip: fetch timings when episode changes ───────────────────────────
   useEffect(() => {
@@ -2367,6 +2459,17 @@ export default function TVPage({
                         }}
                       >
                         <span>{src.label}</span>
+                        {sourceSpeedMetrics[src.id] ? (
+                          fastestSourceId === src.id ? (
+                            <span className="source-dropdown__tag">
+                              Fastest · {(sourceSpeedMetrics[src.id].averageMs / 1000).toFixed(1)}s
+                            </span>
+                          ) : (
+                            <span className="source-dropdown__note">
+                              {(sourceSpeedMetrics[src.id].averageMs / 1000).toFixed(1)}s avg
+                            </span>
+                          )
+                        ) : null}
                         {src.tag && (
                           <span className="source-dropdown__tag">
                             {src.tag}

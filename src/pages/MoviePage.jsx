@@ -43,6 +43,7 @@ import DownloadModal from "../components/DownloadModal";
 import TrailerModal from "../components/TrailerModal";
 import BlockedStatsModal from "../components/BlockedStatsModal";
 import { useBlockedStats } from "../utils/useBlockedStats";
+import useSourceSpeed from "../utils/useSourceSpeed";
 import MediaCard from "../components/MediaCard";
 import {
   storage,
@@ -113,6 +114,13 @@ export default function MoviePage({
   const playerWrapRef = useRef(null);
   const webviewRef = useRef(null);
   const providerFallbackAttemptedRef = useRef(false);
+  const { metrics: sourceSpeedMetrics, fastestSourceId } = useSourceSpeed({
+    mediaType: "movie",
+    itemId: item.id,
+    sourceId: playerSource,
+    playing,
+    webviewRef,
+  });
   // Always-current refs for interval callbacks, avoids stale closures without restarting the interval
   const saveProgressRef = useRef(saveProgress);
   saveProgressRef.current = saveProgress;
@@ -1253,6 +1261,17 @@ export default function MoviePage({
                     }}
                   >
                     <span>{src.label}</span>
+                    {sourceSpeedMetrics[src.id] ? (
+                      fastestSourceId === src.id ? (
+                        <span className="source-dropdown__tag">
+                          Fastest · {(sourceSpeedMetrics[src.id].averageMs / 1000).toFixed(1)}s
+                        </span>
+                      ) : (
+                        <span className="source-dropdown__note">
+                          {(sourceSpeedMetrics[src.id].averageMs / 1000).toFixed(1)}s avg
+                        </span>
+                      )
+                    ) : null}
                     {src.tag && (
                       <span className="source-dropdown__tag">{src.tag}</span>
                     )}

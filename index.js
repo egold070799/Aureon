@@ -18,6 +18,10 @@ app.commandLine.appendSwitch(
   "disable-features",
   "HardwareMediaKeyHandling,MediaSessionService,UseSandboxedXdgPortal",
 );
+// Episodes are opened from a user click, but the video lives in a newly
+// navigated provider webview. Chromium doesn't carry that click's autoplay
+// permission across the navigation, so provider players can remain paused.
+app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 // Run the network stack in the browser process → one less utility process
 app.commandLine.appendSwitch("enable-features", "NetworkServiceInProcess2");
 // NOTE: enable-low-end-device-mode removed, it cuts the GPU texture tile budget

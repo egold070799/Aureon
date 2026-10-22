@@ -2418,34 +2418,13 @@ function DiscordRpcSection() {
 // ── Section Group Header ─────────────────────────────────────────────────────
 function SectionGroupHeader({ title, subtitle }) {
   return (
-    <div style={{ marginBottom: 32, marginTop: 4 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          marginBottom: subtitle ? 6 : 0,
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 16,
-            letterSpacing: 2,
-            color: "var(--red)",
-            textTransform: "uppercase",
-            fontWeight: 700,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {title}
-        </div>
-        <div
-          style={{ flex: 1, height: 1, background: "rgba(229,9,20,0.18)" }}
-        />
+    <div className="settings-group-heading">
+      <div className="settings-group-heading__row">
+        <div className="settings-group-heading__title">{title}</div>
+        <div className="settings-group-heading__rule" />
       </div>
       {subtitle && (
-        <div style={{ fontSize: 12, color: "var(--text3)", lineHeight: 1.5 }}>
+        <div className="settings-group-heading__subtitle">
           {subtitle}
         </div>
       )}
@@ -2456,7 +2435,7 @@ function SectionGroupHeader({ title, subtitle }) {
 // ── Section divider ───────────────────────────────────────────────────────────
 function Divider() {
   return (
-    <div style={{ height: 1, background: "var(--border)", marginBottom: 40 }} />
+    <div className="settings-divider" />
   );
 }
 
@@ -2870,27 +2849,10 @@ function SettingsTopBar({ sectionRefs, contentRef }) {
   };
 
   return (
-    <div
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        background: "var(--bg, #141414)",
-        borderBottom: "1px solid var(--border)",
-        padding: "0 48px",
-        backdropFilter: "blur(12px)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 0",
-        }}
-      >
+    <div className="settings-topbar">
+      <div className="settings-topbar__inner">
         {/* ── Search area ── */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="settings-topbar__search-area">
           {searchOpen ? (
             <div
               ref={searchBarRef}
@@ -3544,8 +3506,7 @@ export default function SettingsPage({
 
       <div
         ref={contentRef}
-        className="fade-in"
-        style={{ padding: "40px 48px 80px" }}
+        className="settings-content fade-in"
       >
         {/* Page title */}
         <h1 className="settings-page-title">
@@ -3558,7 +3519,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: GENERAL                                                     */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secUpdates} style={{ scrollMarginTop: 80 }}>
+        <div ref={secUpdates} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="General"
             subtitle="App version, updates, API credentials and Languages"
@@ -3617,7 +3578,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: CONTENT                                                     */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secContent} style={{ scrollMarginTop: 80 }}>
+        <div ref={secContent} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Content"
             subtitle="Parental controls and content filtering by age rating"
@@ -3700,7 +3661,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: PLAYBACK                                                    */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secPlayback} style={{ scrollMarginTop: 80 }}>
+        <div ref={secPlayback} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Playback"
             subtitle="Trailer source and auto-watched behavior"
@@ -4131,7 +4092,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: SUBTITLES                                                   */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secSubtitles} style={{ scrollMarginTop: 80 }}>
+        <div ref={secSubtitles} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Subtitles"
             subtitle="Subtitle download source, preferred language, and API key"
@@ -4142,7 +4103,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: DOWNLOADS                                                   */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secDownloads} style={{ scrollMarginTop: 80 }}>
+        <div ref={secDownloads} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Downloads"
             subtitle="Where downloaded video files are saved on disk"
@@ -4202,7 +4163,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: NOTIFICATIONS                                               */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secNotifications} style={{ scrollMarginTop: 80 }}>
+        <div ref={secNotifications} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Notifications"
             subtitle="Desktop alerts for downloads and new episode releases"
@@ -4213,7 +4174,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: DISCORD RICH PRESENCE                                       */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secDiscordRpc} style={{ scrollMarginTop: 80 }}>
+        <div ref={secDiscordRpc} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Discord Rich Presence"
             subtitle="Show what you're watching on your Discord profile"
@@ -4224,7 +4185,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: INTERFACE                                                   */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secInterface} style={{ scrollMarginTop: 80 }}>
+        <div ref={secInterface} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Interface"
             subtitle="Home layout, start page, appearance, and display options"
@@ -4239,7 +4200,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: LIBRARY                                                     */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secLibrary} style={{ scrollMarginTop: 80 }}>
+        <div ref={secLibrary} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Library"
             subtitle="Watchlist sort order and watch history preferences"
@@ -4250,7 +4211,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: BACKUP                                                      */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secBackup} style={{ scrollMarginTop: 80 }}>
+        <div ref={secBackup} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Backup & Restore"
             subtitle="Export your data or restore from a previous backup file"
@@ -4261,7 +4222,7 @@ export default function SettingsPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* GROUP: STORAGE & DATA                                              */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div ref={secStorage} style={{ scrollMarginTop: 80 }}>
+        <div ref={secStorage} className="settings-group" style={{ scrollMarginTop: 80 }}>
           <SectionGroupHeader
             title="Storage & Data"
             subtitle="Clear cache, watch progress, downloads, or reset the entire app"

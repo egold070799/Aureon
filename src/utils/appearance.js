@@ -73,16 +73,16 @@ export const THEME_PRESETS = [
   {
     id: "dark",
     label: "Dark",
-    description: "Default dark theme",
+    description: "A refined, cool-toned dark theme",
     vars: {
-      "--bg": "#0a0a0a",
-      "--surface": "#111111",
-      "--surface2": "#1a1a1a",
-      "--surface3": "#222222",
-      "--border": "#2a2a2a",
-      "--text": "#f0f0f0",
-      "--text2": "#c0c0c0",
-      "--text3": "#909090",
+      "--bg": "#0b0d11",
+      "--surface": "#11141a",
+      "--surface2": "#181c23",
+      "--surface3": "#222832",
+      "--border": "#2c333e",
+      "--text": "#f1f3f7",
+      "--text2": "#adb5c2",
+      "--text3": "#7f8998",
     },
   },
   {
@@ -155,14 +155,14 @@ export const THEME_PRESETS = [
 
 /** Default custom theme vars (used when user first opens the custom editor). */
 export const DEFAULT_CUSTOM_VARS = {
-  "--bg": "#0a0a0a",
-  "--surface": "#111111",
-  "--surface2": "#1a1a1a",
-  "--surface3": "#222222",
-  "--border": "#2a2a2a",
-  "--text": "#f0f0f0",
-  "--text2": "#c0c0c0",
-  "--text3": "#909090",
+  "--bg": "#0b0d11",
+  "--surface": "#11141a",
+  "--surface2": "#181c23",
+  "--surface3": "#222832",
+  "--border": "#2c333e",
+  "--text": "#f1f3f7",
+  "--text2": "#adb5c2",
+  "--text3": "#7f8998",
 };
 
 /**
