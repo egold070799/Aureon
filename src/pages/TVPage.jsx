@@ -2230,10 +2230,12 @@ export default function TVPage({
                   tabIndex={-1}
                 />
                 {/* Left-side overlay button group, flex row, no fixed px offsets */}
-                <div className="player-overlay-group">
+                <div className="player-overlay-group" role="group" aria-label="Player options">
                   <button
                     ref={sourceRef}
                     className="player-overlay-btn"
+                    type="button"
+                    aria-expanded={showSourceMenu}
                     onClick={() => {
                       const rect = sourceRef.current?.getBoundingClientRect();
                       if (rect)
@@ -2250,6 +2252,9 @@ export default function TVPage({
                   {isAsync && (
                     <button
                       className="player-overlay-btn"
+                      type="button"
+                      aria-label={`Switch to ${dubMode === "sub" ? "dub audio" : "subtitles"}`}
+                      aria-pressed={dubMode === "dub"}
                       onClick={() => {
                         const next = dubMode === "sub" ? "dub" : "sub";
                         setDubMode(next);
@@ -2270,6 +2275,8 @@ export default function TVPage({
                   {/* Blocked ads & trackers button */}
                   <button
                     className="player-overlay-btn"
+                    type="button"
+                    aria-label={`Blocked ads and trackers${blockedSession > 0 ? `, ${blockedSession} blocked` : ""}`}
                     onClick={() => {
                       setShowSourceMenu(false);
                       setShowBlockedModal(true);
@@ -2286,6 +2293,8 @@ export default function TVPage({
                   {/* Pop-out button */}
                   <button
                     className="player-overlay-btn"
+                    type="button"
+                    aria-label={pipOpen ? "Close pop-out player" : "Open pop-out player"}
                     onClick={() => {
                       if (pipOpen) {
                         window.electron?.closePipWindow?.();
@@ -2374,6 +2383,12 @@ export default function TVPage({
                 )}
                 <button
                   className="player-overlay-btn"
+                  type="button"
+                  aria-label={
+                    currentEpDownload
+                      ? "Open this episode in downloads"
+                      : "Download this episode"
+                  }
                   onClick={() =>
                     currentEpDownload
                       ? onGoToDownloads?.(currentEpDownload.id)

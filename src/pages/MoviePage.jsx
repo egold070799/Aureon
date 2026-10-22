@@ -1124,10 +1124,12 @@ export default function MoviePage({
               }}
             />
             {/* Left-side overlay button group, flex row, no fixed px offsets */}
-            <div className="player-overlay-group">
+            <div className="player-overlay-group" role="group" aria-label="Player options">
               <button
                 ref={sourceRef}
                 className="player-overlay-btn"
+                type="button"
+                aria-expanded={showSourceMenu}
                 onClick={() => {
                   const rect = sourceRef.current?.getBoundingClientRect();
                   if (rect)
@@ -1144,6 +1146,9 @@ export default function MoviePage({
               {sourceIsAsync(playerSource) && (
                 <button
                   className="player-overlay-btn"
+                  type="button"
+                  aria-label={`Switch to ${dubMode === "sub" ? "dub audio" : "subtitles"}`}
+                  aria-pressed={dubMode === "dub"}
                   onClick={() => {
                     const next = dubMode === "sub" ? "dub" : "sub";
                     setDubMode(next);
@@ -1164,6 +1169,8 @@ export default function MoviePage({
               {/* Blocked ads & trackers button */}
               <button
                 className="player-overlay-btn"
+                type="button"
+                aria-label={`Blocked ads and trackers${blockedSession > 0 ? `, ${blockedSession} blocked` : ""}`}
                 onClick={() => {
                   setShowSourceMenu(false);
                   setShowBlockedModal(true);
@@ -1178,6 +1185,8 @@ export default function MoviePage({
               {/* Pop-out button*/}
               <button
                 className="player-overlay-btn"
+                type="button"
+                aria-label={pipOpen ? "Close pop-out player" : "Open pop-out player"}
                 onClick={() => {
                   if (pipOpen) {
                     window.electron?.closePipWindow?.();
@@ -1256,6 +1265,12 @@ export default function MoviePage({
             )}
             <button
               className="player-overlay-btn"
+              type="button"
+              aria-label={
+                movieDownload
+                  ? "Open this title in downloads"
+                  : "Download this title"
+              }
               onClick={() =>
                 movieDownload
                   ? onGoToDownloads?.(movieDownload.id)

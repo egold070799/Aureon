@@ -1,6 +1,6 @@
 {
   "name": "Aureon",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "Aureon Desktop App",
   "main": "index.js",
   "private": true,
