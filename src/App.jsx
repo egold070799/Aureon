@@ -46,6 +46,7 @@ import {
   checkForUpdates,
   DEFAULT_UPDATE_SOURCE,
   UPDATE_SOURCES,
+  GITHUB_REPO,
 } from "./utils/updates";
 
 export default function App() {
@@ -143,17 +144,50 @@ export default function App() {
 
   // ── Startup update check ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!storage.get("autoCheckUpdates")) return;
+    const autoUpdatePreference = storage.get(STORAGE_KEYS.AUTO_CHECK_UPDATES);
+    if (autoUpdatePreference === false || autoUpdatePreference === 0) return;
+
+    let mounted = true;
+    const onAutoUpdateStatus = window.electron?.onAutoUpdateStatus?.((status) => {
+      if (!mounted || !["downloading", "downloaded"].includes(status?.status))
+        return;
+      window.electron?.getAppVersion?.().then((current) => {
+        if (!mounted) return;
+        setUpdateBanner((existing) =>
+          existing?.hasUpdate
+            ? existing
+            : {
+                latest: status.version || "",
+                current,
+                url: `https://github.com/${GITHUB_REPO}/releases/latest`,
+                changelog: "",
+                assets: {},
+                sourceLabel: "GitHub Releases",
+                hasUpdate: true,
+              },
+        );
+      });
+    });
+
     const storedSource = storage.get(STORAGE_KEYS.UPDATE_SOURCE);
     const source = UPDATE_SOURCES[storedSource]
       ? storedSource
       : DEFAULT_UPDATE_SOURCE;
     if (source !== storedSource) storage.set(STORAGE_KEYS.UPDATE_SOURCE, source);
+
+    // The native updater checks the release metadata and downloads the
+    // update in the background. Keep the release API check for the in-app notes.
+    window.electron?.checkAutoUpdate?.().catch(() => {});
     checkForUpdates(source)
       .then((r) => {
-        if (r.hasUpdate) setUpdateBanner(r);
+        if (mounted && r.hasUpdate) setUpdateBanner(r);
       })
       .catch(() => {}); // silently ignore network errors on startup
+    return () => {
+      mounted = false;
+      if (onAutoUpdateStatus)
+        window.electron?.offAutoUpdateStatus?.(onAutoUpdateStatus);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

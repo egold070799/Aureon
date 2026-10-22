@@ -1,6 +1,7 @@
 // ── IPC: Player launch, window controls, auto-updater ─────────────────────────
 
 const { ipcMain, shell, app } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const { spawn, spawnSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
@@ -9,6 +10,8 @@ const http = require("http");
 const os = require("os");
 
 let _updateAbortController = null;
+let appUpdateState = { status: "idle", percent: 0, supported: false };
+let autoUpdaterConfigured = false;
 
 // ── Trusted release sources for the auto-updater ──────────────────────────────
 // Same validation logic applies to every entry below, adding a new source
@@ -43,6 +46,108 @@ function findTrustedUpdateSource(parsedUrl) {
 }
 
 function register(getMainWindow, { writeSecretMigration }) {
+  // The built-in updater is supported for the packaged Windows NSIS build.
+  // Other platforms keep the existing verified installer download flow below.
+  const autoUpdateSupported = app.isPackaged && process.platform === "win32";
+
+  const setAutoUpdateState = (next) => {
+    appUpdateState = {
+      ...appUpdateState,
+      ...next,
+      supported: autoUpdateSupported,
+    };
+    const window = getMainWindow();
+    if (window && !window.isDestroyed()) {
+      window.webContents.send("app-update-status", appUpdateState);
+    }
+  };
+
+  if (autoUpdateSupported && !autoUpdaterConfigured) {
+    autoUpdaterConfigured = true;
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.allowDowngrade = false;
+
+    autoUpdater.on("checking-for-update", () => {
+      setAutoUpdateState({ status: "checking", percent: 0, error: null });
+    });
+    autoUpdater.on("update-available", (info) => {
+      setAutoUpdateState({
+        status: "downloading",
+        percent: 0,
+        version: info.version,
+        releaseName: info.releaseName || "",
+        releaseNotes: info.releaseNotes || "",
+        error: null,
+      });
+    });
+    autoUpdater.on("update-not-available", (info) => {
+      setAutoUpdateState({
+        status: "up-to-date",
+        percent: 0,
+        version: info.version,
+        error: null,
+      });
+    });
+    autoUpdater.on("download-progress", (progress) => {
+      setAutoUpdateState({
+        status: "downloading",
+        percent: Math.max(0, Math.min(100, progress.percent || 0)),
+        bytesPerSecond: progress.bytesPerSecond || 0,
+        transferred: progress.transferred || 0,
+        total: progress.total || 0,
+      });
+    });
+    autoUpdater.on("update-downloaded", (info) => {
+      setAutoUpdateState({
+        status: "downloaded",
+        percent: 100,
+        version: info.version,
+        releaseName: info.releaseName || "",
+        releaseNotes: info.releaseNotes || "",
+        error: null,
+      });
+    });
+    autoUpdater.on("error", (error) => {
+      setAutoUpdateState({
+        status: "error",
+        error: error?.message || "The automatic update failed.",
+      });
+    });
+  }
+
+  ipcMain.handle("get-auto-update-status", () => ({
+    ...appUpdateState,
+    supported: autoUpdateSupported,
+  }));
+
+  ipcMain.handle("check-auto-update", async () => {
+    if (!autoUpdateSupported) {
+      return { ok: false, supported: false, error: "Built-in updates are available in the packaged Windows app." };
+    }
+    if (["checking", "downloading", "downloaded"].includes(appUpdateState.status)) {
+      return { ok: true, state: appUpdateState };
+    }
+    setAutoUpdateState({ status: "checking", percent: 0, error: null });
+    try {
+      await autoUpdater.checkForUpdates();
+      return { ok: true, state: appUpdateState };
+    } catch (error) {
+      setAutoUpdateState({ status: "error", error: error?.message || "The update check failed." });
+      return { ok: false, supported: true, error: error?.message || "The update check failed." };
+    }
+  });
+
+  ipcMain.handle("install-auto-update", () => {
+    if (!autoUpdateSupported || appUpdateState.status !== "downloaded") {
+      return { ok: false, error: "No downloaded update is ready to install." };
+    }
+    // Preserve the existing secure-storage migration safety step before relaunch.
+    writeSecretMigration();
+    autoUpdater.quitAndInstall(true, true);
+    return { ok: true };
+  });
+
   // ── Open file at specific timestamp in mpv / VLC ─────────────────────────
 
   // Extensions considered safe to pass to an external media player.

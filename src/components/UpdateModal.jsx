@@ -446,6 +446,8 @@ export default function UpdateModal({
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [autoUpdateSupported, setAutoUpdateSupported] = useState(false);
+  const [autoUpdateStatus, setAutoUpdateStatus] = useState({ status: "idle" });
   const cancelRef = useRef(false);
 
   // Detect install format on mount
@@ -457,6 +459,24 @@ export default function UpdateModal({
     });
     return () => {
       mounted = false;
+    };
+  }, []);
+
+  // The packaged Windows app downloads signed releases through Electron's
+  // updater. Read the current state so an update started at startup is visible
+  // here even if the modal was opened later.
+  useEffect(() => {
+    let mounted = true;
+    const updateStatus = (status) => {
+      if (!mounted || !status) return;
+      setAutoUpdateSupported(!!status.supported);
+      setAutoUpdateStatus(status);
+    };
+    const handler = window.electron?.onAutoUpdateStatus?.(updateStatus);
+    window.electron?.getAutoUpdateStatus?.().then(updateStatus).catch(() => {});
+    return () => {
+      mounted = false;
+      if (handler) window.electron?.offAutoUpdateStatus?.(handler);
     };
   }, []);
 
@@ -472,10 +492,13 @@ export default function UpdateModal({
 
   const assetUrl = format && assets?.[format];
   const canInstall =
-    format && assetUrl && activeDownloads === 0 && phase === "idle";
+    (autoUpdateSupported || (format && assetUrl)) &&
+    activeDownloads === 0 &&
+    phase === "idle" &&
+    !["checking", "downloading"].includes(autoUpdateStatus.status);
 
-  const handleInstall = async () => {
-    if (!canInstall) return;
+  const handleLegacyInstall = async () => {
+    if (!format || !assetUrl) return;
     cancelRef.current = false;
     setPhase("downloading");
     setProgress(0);
@@ -497,6 +520,42 @@ export default function UpdateModal({
     }
   };
 
+  const handleInstall = async () => {
+    if (!canInstall) return;
+    if (autoUpdateSupported) {
+      if (autoUpdateStatus.status === "downloaded") {
+        setPhase("installing");
+        setProgressLabel("Restarting to apply the update…");
+        const result = await window.electron.installAutoUpdate();
+        if (!result?.ok) {
+          setPhase("error");
+          setErrorMsg(result?.error || "Could not restart to install the update.");
+        }
+        return;
+      }
+
+      setErrorMsg("");
+      try {
+        const result = await window.electron.checkAutoUpdate();
+        if (result?.state) setAutoUpdateStatus(result.state);
+        if (!result?.ok) {
+          setAutoUpdateStatus({ status: "error", error: result?.error });
+          setErrorMsg(result?.error || "Automatic update could not start.");
+        }
+      } catch (error) {
+        setAutoUpdateStatus({ status: "error", error: error?.message });
+        setErrorMsg(error?.message || "Automatic update could not start.");
+      }
+      return;
+    }
+    await handleLegacyInstall();
+  };
+
+  const handleInstallerFallback = async () => {
+    setErrorMsg("");
+    await handleLegacyInstall();
+  };
+
   const handleCancel = () => {
     if (phase === "downloading") {
       cancelRef.current = true;
@@ -515,6 +574,9 @@ export default function UpdateModal({
     }[format] || "installer";
 
   const busy = phase === "downloading" || phase === "installing";
+  const nativeDownloading = autoUpdateStatus.status === "downloading";
+  const nativeChecking = autoUpdateStatus.status === "checking";
+  const nativeDownloaded = autoUpdateStatus.status === "downloaded";
 
   return (
     <div
@@ -601,23 +663,29 @@ export default function UpdateModal({
                     </span>
                   </>
                 )}
-                <a
-                  href={url}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.electron?.openExternal(url);
-                  }}
-                  style={{
-                    color: "var(--red)",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    cursor: "pointer",
-                  }}
-                  title={`View on ${sourceLabel || "GitHub"}`}
-                >
-                  v{latest} ↗
-                </a>
-                is ready to install
+                {autoUpdateSupported ? (
+                  <strong style={{ color: "var(--red)", fontWeight: 600 }}>
+                    v{latest}
+                  </strong>
+                ) : (
+                  <a
+                    href={url}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.electron?.openExternal(url);
+                    }}
+                    style={{
+                      color: "var(--red)",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                      cursor: "pointer",
+                    }}
+                    title={`View on ${sourceLabel || "GitHub"}`}
+                  >
+                    v{latest} ↗
+                  </a>
+                )}
+                is available
                 {format && (
                   <span
                     style={{
@@ -715,7 +783,7 @@ export default function UpdateModal({
           )}
 
           {/* No format detected warning */}
-          {!format && phase === "idle" && (
+          {!format && !autoUpdateSupported && phase === "idle" && (
             <div
               style={{ fontSize: 12, color: "var(--text3)", marginBottom: 12 }}
             >
@@ -781,6 +849,24 @@ export default function UpdateModal({
             </div>
           )}
 
+          {(nativeChecking || nativeDownloading) && phase === "idle" && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--text3)", marginBottom: 6 }}>
+                <span>{nativeChecking ? "Checking for updates…" : "Downloading update in the background…"}</span>
+                {nativeDownloading && <span>{Math.round(autoUpdateStatus.percent || 0)}%</span>}
+              </div>
+              <div style={{ height: 4, background: "var(--surface2)", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: nativeChecking ? "35%" : `${Math.max(0, Math.min(100, autoUpdateStatus.percent || 0))}%`, background: "var(--red)", borderRadius: 2, transition: "width 0.3s ease", animation: nativeChecking ? "progress-indeterminate 1.2s ease-in-out infinite" : "none" }} />
+              </div>
+            </div>
+          )}
+
+          {nativeDownloaded && phase === "idle" && (
+            <div style={{ fontSize: 13, color: "#48c774", marginBottom: 12 }}>
+              ✓ Version {autoUpdateStatus.version || latest} is downloaded and ready. Restart Aureon to apply it.
+            </div>
+          )}
+
           {/* Error */}
           {phase === "error" && (
             <div
@@ -806,6 +892,12 @@ export default function UpdateModal({
             </div>
           )}
 
+          {autoUpdateStatus.status === "error" && phase === "idle" && (
+            <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 12 }}>
+              Automatic update failed: {autoUpdateStatus.error || errorMsg || "unknown error"}. You can use the installer fallback below.
+            </div>
+          )}
+
           {/* Done */}
           {phase === "done" && (
             <div style={{ fontSize: 13, color: "#48c774", marginBottom: 12 }}>
@@ -820,28 +912,30 @@ export default function UpdateModal({
             </button>
             {phase === "idle" && (
               <>
-                <a
-                  href={url}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.electron?.openExternal(url);
-                  }}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "9px 18px",
-                    background: "var(--surface2)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 8,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "var(--text)",
-                    textDecoration: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  {sourceLabel || "GitHub"} ↗
-                </a>
+                {!autoUpdateSupported && (
+                  <a
+                    href={url}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.electron?.openExternal(url);
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "9px 18px",
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 8,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "var(--text)",
+                      textDecoration: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {sourceLabel || "GitHub"} ↗
+                  </a>
+                )}
                 <button
                   className="btn"
                   disabled={!canInstall}
@@ -857,8 +951,23 @@ export default function UpdateModal({
                     cursor: canInstall ? "pointer" : "not-allowed",
                   }}
                 >
-                  Install Update
+                  {nativeDownloaded
+                    ? "Restart to update"
+                    : nativeChecking
+                      ? "Checking…"
+                      : nativeDownloading
+                        ? "Downloading…"
+                        : autoUpdateStatus.status === "error" && autoUpdateSupported
+                          ? "Try again"
+                          : autoUpdateSupported
+                            ? "Download update"
+                            : "Download & install"}
                 </button>
+                {autoUpdateSupported && autoUpdateStatus.status === "error" && format && assetUrl && (
+                  <button className="btn btn-ghost" onClick={handleInstallerFallback} disabled={activeDownloads > 0}>
+                    Use installer instead
+                  </button>
+                )}
               </>
             )}
           </div>

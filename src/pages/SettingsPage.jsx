@@ -658,8 +658,8 @@ function VersionSection() {
           title={autoCheck ? "Disable auto-check" : "Enable auto-check"}
         />
         <div className="version-auto-copy">
-          <strong>Check for updates on startup</strong>
-          <span>Show a notification when a newer release is available.</span>
+          <strong>Download updates automatically</strong>
+          <span>Check on startup, download in the background, then restart Aureon to apply.</span>
         </div>
         {autoSaved ? <span className="version-saved">✓ Saved</span> : null}
       </div>

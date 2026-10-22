@@ -160,6 +160,15 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("get-video-duration", filePath),
   setZoomFactor: (factor) => webFrame.setZoomFactor(factor),
   // Auto-updater
+  getAutoUpdateStatus: () => ipcRenderer.invoke("get-auto-update-status"),
+  checkAutoUpdate: () => ipcRenderer.invoke("check-auto-update"),
+  installAutoUpdate: () => ipcRenderer.invoke("install-auto-update"),
+  onAutoUpdateStatus: (cb) => {
+    const h = (_, data) => cb(data);
+    ipcRenderer.on("app-update-status", h);
+    return h;
+  },
+  offAutoUpdateStatus: (h) => ipcRenderer.removeListener("app-update-status", h),
   detectUpdateFormat: () => ipcRenderer.invoke("detect-update-format"),
   downloadAndInstallUpdate: (args) =>
     ipcRenderer.invoke("download-and-install-update", args),
