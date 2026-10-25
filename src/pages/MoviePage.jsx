@@ -1110,7 +1110,12 @@ export default function MoviePage({
                         item.id,
                         null,
                         null,
-                        {},
+                        playerSource === "vidcore"
+                          ? {
+                              startAt:
+                                storage.get("dlTime_" + progressKey) || 0,
+                            }
+                          : {},
                         playerAccentColor,
                         playerSubLang,
                       )
@@ -1208,7 +1213,12 @@ export default function MoviePage({
                         item.id,
                         null,
                         null,
-                        {},
+                        playerSource === "vidcore"
+                          ? {
+                              startAt:
+                                storage.get("dlTime_" + progressKey) || 0,
+                            }
+                          : {},
                         playerAccentColor,
                         playerSubLang,
                       );

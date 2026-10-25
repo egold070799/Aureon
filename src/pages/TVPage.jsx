@@ -2297,7 +2297,14 @@ export default function TVPage({
                             item.id,
                             playerEp.season,
                             playerEp.episode,
-                            {},
+                            playerSource === "vidcore" && currentProgressKey
+                              ? {
+                                  startAt:
+                                    storage.get(
+                                      "dlTime_" + currentProgressKey,
+                                    ) || 0,
+                                }
+                              : {},
                             playerAccentColor,
                             playerSubLang,
                           ) || "about:blank"
@@ -2400,7 +2407,14 @@ export default function TVPage({
                             item.id,
                             playerEp.season,
                             playerEp.episode,
-                            {},
+                            playerSource === "vidcore" && currentProgressKey
+                              ? {
+                                  startAt:
+                                    storage.get(
+                                      "dlTime_" + currentProgressKey,
+                                    ) || 0,
+                                }
+                              : {},
                             playerAccentColor,
                             playerSubLang,
                           );
