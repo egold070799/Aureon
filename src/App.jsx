@@ -97,7 +97,9 @@ export default function App() {
     const accentHex = inPlayer
       ? (ACCENT_PRESETS.find((p) => p.id === accentId)?.color ?? null)
       : null;
-    const subtitleLang = storage.get(STORAGE_KEYS.SUBTITLE_LANG) || null;
+    // Keep a useful default for player sources that accept a language hint
+    // (for example VidCore's `sub` parameter), even before Settings is saved.
+    const subtitleLang = storage.get(STORAGE_KEYS.SUBTITLE_LANG) || "en";
     return { accentColor: accentHex, subtitleLang };
   };
   const [playerSettings, setPlayerSettings] = useState(readPlayerSettings);

@@ -44,6 +44,7 @@ import TrailerModal from "../components/TrailerModal";
 import BlockedStatsModal from "../components/BlockedStatsModal";
 import { useBlockedStats } from "../utils/useBlockedStats";
 import useSourceSpeed from "../utils/useSourceSpeed";
+import useVidCoreId from "../utils/useVidCoreId";
 import MediaCard from "../components/MediaCard";
 import {
   storage,
@@ -95,6 +96,16 @@ export default function MoviePage({
   const [playerSource, setPlayerSource] = useState(
     () => storage.get("playerSource") || NON_ANIME_DEFAULT_SOURCE,
   );
+  const {
+    id: vidCoreMediaId,
+    loading: vidCoreIdLoading,
+  } = useVidCoreId({
+    enabled: playerSource === "vidcore",
+    mediaType: "movie",
+    itemId: item.id,
+    apiKey,
+    knownImdbId: details?.imdb_id || details?.external_ids?.imdb_id || item.imdb_id,
+  });
 
   // Accent colour + subtitle lang come from App-level state (via props),
   // so they are always fresh after Settings save without any extra storage reads.
@@ -1001,7 +1012,7 @@ export default function MoviePage({
               </div>
             )}
             {/* Universal source-loading overlay, shown instantly on every source/item switch */}
-            {webviewLoading && !resolveError && (
+            {(webviewLoading || (playerSource === "vidcore" && vidCoreIdLoading)) && !resolveError && (
               <div
                 style={{
                   position: "absolute",
@@ -1104,21 +1115,23 @@ export default function MoviePage({
                   ? "about:blank"
                   : sourceIsAsync(playerSource)
                     ? resolvedPlayerUrl || "about:blank"
-                    : getSourceUrl(
-                        playerSource,
-                        "movie",
-                        item.id,
-                        null,
-                        null,
-                        playerSource === "vidcore"
-                          ? {
-                              startAt:
-                                storage.get("dlTime_" + progressKey) || 0,
-                            }
-                          : {},
-                        playerAccentColor,
-                        playerSubLang,
-                      )
+                    : playerSource === "vidcore" && vidCoreIdLoading
+                      ? "about:blank"
+                      : getSourceUrl(
+                          playerSource,
+                          "movie",
+                          playerSource === "vidcore" ? vidCoreMediaId : item.id,
+                          null,
+                          null,
+                          playerSource === "vidcore"
+                            ? {
+                                startAt:
+                                  storage.get("dlTime_" + progressKey) || 0,
+                              }
+                            : {},
+                          playerAccentColor,
+                          playerSubLang,
+                        )
               }
               partition="persist:player"
               allowpopups="false"
@@ -1131,6 +1144,7 @@ export default function MoviePage({
                 border: "none",
                 visibility:
                   webviewLoading ||
+                  (playerSource === "vidcore" && vidCoreIdLoading) ||
                   (sourceIsAsync(playerSource) && !resolvedPlayerUrl)
                     ? "hidden"
                     : "visible",
@@ -1210,7 +1224,7 @@ export default function MoviePage({
                     : getSourceUrl(
                         playerSource,
                         "movie",
-                        item.id,
+                        playerSource === "vidcore" ? vidCoreMediaId : item.id,
                         null,
                         null,
                         playerSource === "vidcore"
@@ -1230,6 +1244,7 @@ export default function MoviePage({
                 disabled={
                   !pipOpen &&
                   (webviewLoading ||
+                    (playerSource === "vidcore" && vidCoreIdLoading) ||
                     !!(sourceIsAsync(playerSource) && !resolvedPlayerUrl))
                 }
                 style={pipOpen ? { color: "var(--red)" } : undefined}

@@ -630,7 +630,7 @@ function VersionSection() {
 
         {result && !result.error && result.hasUpdate && (
           <button className="version-status version-status-update" onClick={() => setShowUpdateModal(true)}>
-            <span>Version v{result.latest} is available</span><strong>Review update →</strong>
+            <span>Version v{result.latest} is available</span><strong>Download update ↓</strong>
           </button>
         )}
 
@@ -647,6 +647,7 @@ function VersionSection() {
       {showUpdateModal && result?.hasUpdate && (
         <UpdateModal
           updateInfo={result}
+          autoStartDownload
           onClose={() => setShowUpdateModal(false)}
         />
       )}
@@ -1985,7 +1986,17 @@ function SubtitleSettingsSection() {
             <div
               style={{ fontSize: 12, color: "var(--text3)", marginBottom: 6 }}
             >
-              Default language
+              Preferred subtitle language
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--text3)",
+                marginBottom: 8,
+                lineHeight: 1.5,
+              }}
+            >
+              Used for subtitle searches and preselected captions on player sources that support it.
             </div>
             <SettingsSelect
               value={lang}

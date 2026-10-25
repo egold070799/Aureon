@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FilmIcon,
   PlayIcon,
@@ -45,6 +45,17 @@ export default function ContinueWatchingShowcase({
       return true;
     });
   }, [items]);
+
+  // New playback history is sorted to the front. Move the spotlight back to
+  // that newest item when a fresh play is recorded, without resetting the
+  // viewer's carousel selection on routine progress updates.
+  const latestItem = resumeItems[0];
+  const latestPlayback = latestItem
+    ? `${latestItem.media_type || "movie"}_${latestItem.id}_${latestItem.watchedAt || ""}`
+    : "";
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [latestPlayback]);
 
   if (resumeItems.length === 0) {
     return (

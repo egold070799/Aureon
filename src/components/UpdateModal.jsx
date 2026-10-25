@@ -437,6 +437,7 @@ function renderChangelog(text) {
 export default function UpdateModal({
   updateInfo,
   activeDownloads = 0,
+  autoStartDownload = false,
   onClose,
 }) {
   const { latest, current, url, changelog, assets, sourceLabel } = updateInfo;
@@ -448,6 +449,8 @@ export default function UpdateModal({
   const [errorMsg, setErrorMsg] = useState("");
   const [autoUpdateSupported, setAutoUpdateSupported] = useState(false);
   const [autoUpdateStatus, setAutoUpdateStatus] = useState({ status: "idle" });
+  const [autoUpdateStatusReady, setAutoUpdateStatusReady] = useState(false);
+  const autoStartAttemptedRef = useRef(false);
   const cancelRef = useRef(false);
 
   // Detect install format on mount
@@ -471,9 +474,12 @@ export default function UpdateModal({
       if (!mounted || !status) return;
       setAutoUpdateSupported(!!status.supported);
       setAutoUpdateStatus(status);
+      setAutoUpdateStatusReady(true);
     };
     const handler = window.electron?.onAutoUpdateStatus?.(updateStatus);
-    window.electron?.getAutoUpdateStatus?.().then(updateStatus).catch(() => {});
+    const statusRequest = window.electron?.getAutoUpdateStatus?.();
+    if (statusRequest) statusRequest.then(updateStatus).catch(() => setAutoUpdateStatusReady(true));
+    else setAutoUpdateStatusReady(true);
     return () => {
       mounted = false;
       if (handler) window.electron?.offAutoUpdateStatus?.(handler);
@@ -555,6 +561,31 @@ export default function UpdateModal({
     setErrorMsg("");
     await handleLegacyInstall();
   };
+
+  // Opening the Settings "Download update" action starts the download
+  // immediately. Existing background checks/downloads are simply reflected in
+  // the modal, and a downloaded update still waits for the user to restart.
+  useEffect(() => {
+    if (!autoStartDownload || autoStartAttemptedRef.current || !autoUpdateStatusReady) return;
+    if (["checking", "downloading", "downloaded"].includes(autoUpdateStatus.status)) {
+      autoStartAttemptedRef.current = true;
+      return;
+    }
+    if (activeDownloads > 0) return;
+    if (!autoUpdateSupported && (!format || !assetUrl)) return;
+
+    autoStartAttemptedRef.current = true;
+    handleInstall();
+  }, [
+    autoStartDownload,
+    autoUpdateStatusReady,
+    autoUpdateStatus.status,
+    autoUpdateSupported,
+    format,
+    assetUrl,
+    activeDownloads,
+    handleInstall,
+  ]);
 
   const handleCancel = () => {
     if (phase === "downloading") {

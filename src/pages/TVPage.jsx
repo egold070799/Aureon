@@ -51,6 +51,7 @@ import TrailerModal from "../components/TrailerModal";
 import BlockedStatsModal from "../components/BlockedStatsModal";
 import { useBlockedStats } from "../utils/useBlockedStats";
 import useSourceSpeed from "../utils/useSourceSpeed";
+import useVidCoreId from "../utils/useVidCoreId";
 import {
   storage,
   STORAGE_KEYS,
@@ -434,6 +435,17 @@ export default function TVPage({
   const [playerSource, setPlayerSource] = useState(
     () => storage.get("playerSource") || NON_ANIME_DEFAULT_SOURCE,
   );
+  const {
+    id: vidCoreMediaId,
+    loading: vidCoreIdLoading,
+  } = useVidCoreId({
+    enabled: playerSource === "vidcore",
+    mediaType: "tv",
+    itemId: item.id,
+    apiKey,
+    knownImdbId:
+      details?.imdb_id || details?.external_ids?.imdb_id || item.imdb_id,
+  });
   // Accent colour + subtitle lang come from App-level state (via props),
   // so they are always fresh after Settings save without any extra storage reads.
   const playerAccentColor = playerSettings?.accentColor ?? null;
@@ -2018,7 +2030,7 @@ export default function TVPage({
                   </div>
                 )}
                 {/* Universal source-loading overlay, shown instantly on every source/episode switch */}
-                {webviewLoading && !resolveError && (
+                {(webviewLoading || (playerSource === "vidcore" && vidCoreIdLoading)) && !resolveError && (
                   <div
                     style={{
                       position: "absolute",
@@ -2291,23 +2303,25 @@ export default function TVPage({
                       ? "about:blank"
                       : isAsync
                         ? resolvedPlayerUrl || "about:blank"
-                        : getSourceUrl(
-                            playerSource,
-                            "tv",
-                            item.id,
-                            playerEp.season,
-                            playerEp.episode,
-                            playerSource === "vidcore" && currentProgressKey
-                              ? {
-                                  startAt:
-                                    storage.get(
-                                      "dlTime_" + currentProgressKey,
-                                    ) || 0,
-                                }
-                              : {},
-                            playerAccentColor,
-                            playerSubLang,
-                          ) || "about:blank"
+                        : playerSource === "vidcore" && vidCoreIdLoading
+                          ? "about:blank"
+                          : getSourceUrl(
+                              playerSource,
+                              "tv",
+                              playerSource === "vidcore" ? vidCoreMediaId : item.id,
+                              playerEp.season,
+                              playerEp.episode,
+                              playerSource === "vidcore" && currentProgressKey
+                                ? {
+                                    startAt:
+                                      storage.get(
+                                        "dlTime_" + currentProgressKey,
+                                      ) || 0,
+                                  }
+                                : {},
+                              playerAccentColor,
+                              playerSubLang,
+                            ) || "about:blank"
                   }
                   partition="persist:player"
                   allowpopups="false"
@@ -2322,7 +2336,9 @@ export default function TVPage({
                     boxShadow: "none",
                     background: "black",
                     visibility:
-                      webviewLoading || (isAsync && !resolvedPlayerUrl)
+                      webviewLoading ||
+                      (playerSource === "vidcore" && vidCoreIdLoading) ||
+                      (isAsync && !resolvedPlayerUrl)
                         ? "hidden"
                         : "visible",
                   }}
@@ -2404,7 +2420,7 @@ export default function TVPage({
                         : getSourceUrl(
                             playerSource,
                             "tv",
-                            item.id,
+                            playerSource === "vidcore" ? vidCoreMediaId : item.id,
                             playerEp.season,
                             playerEp.episode,
                             playerSource === "vidcore" && currentProgressKey
@@ -2428,7 +2444,9 @@ export default function TVPage({
                     title={pipOpen ? "Close pop-out" : "Pop out player"}
                     disabled={
                       !pipOpen &&
-                      (webviewLoading || !!(isAsync && !resolvedPlayerUrl))
+                      (webviewLoading ||
+                        (playerSource === "vidcore" && vidCoreIdLoading) ||
+                        !!(isAsync && !resolvedPlayerUrl))
                     }
                     style={pipOpen ? { color: "var(--red)" } : undefined}
                   >
